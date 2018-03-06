@@ -22,8 +22,8 @@
 
 
 [[constraint]]
+  branch = "master"
   name = "github.com/palantir/pkg"
-  version = "0.3.0"
 
 [[constraint]]
   name = "github.com/stretchr/testify"

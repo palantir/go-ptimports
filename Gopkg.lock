@@ -8,10 +8,10 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/palantir/pkg"
   packages = ["matcher","pkgpath"]
-  revision = "b0725a91752fd632fbad78256f38399a31bed87c"
-  version = "0.3.0"
+  revision = "b59de130c1302a3c591efcfb0fd575727f53d0d2"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -34,6 +34,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d346ee0eb2fab6ba63da9ccbdefd71f24d4dd384a0abb35b4c1591947d28675b"
+  inputs-digest = "da2906245f3bb0b09df3b90c1134512d3a9409d35172e2bb864b85d451c7186f"
   solver-name = "gps-cdcl"
   solver-version = 1

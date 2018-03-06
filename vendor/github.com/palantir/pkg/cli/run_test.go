@@ -6,12 +6,14 @@ package cli_test
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/palantir/pkg/cli"
+	"github.com/palantir/pkg/cli/flag"
 )
 
 func TestRunErrorOutput(t *testing.T) {
@@ -89,5 +91,110 @@ func TestRunErrorHandler(t *testing.T) {
 		exitCode := app.Run([]string{"testApp"})
 		assert.Equal(t, currCase.expectedExitCode, exitCode, "Case %d", i)
 		assert.Equal(t, currCase.expectedOutput, stderr.String(), "Case %d", i)
+	}
+}
+
+func TestRunContext(t *testing.T) {
+	testFlagName := "test-flag"
+	testFlagValue := "foobar"
+
+	var customContextFunc = func(cliCtx cli.Context, ctx context.Context) context.Context {
+		for _, flag := range cliCtx.Command.Flags {
+			flagVal := cliCtx.FlagValue(flag.MainName())
+			ctx = context.WithValue(ctx, flagVal.Name(), flagVal.ValueString())
+		}
+		return ctx
+	}
+
+	var testFunc = func(ctx cli.Context) error {
+		assert.Equal(t, testFlagValue, ctx.Context().Value(testFlagName))
+		return nil
+	}
+
+	cases := []struct {
+		name  string
+		check func(*testing.T)
+	}{
+		{
+			name: "check that context is propagated to app action",
+			check: func(t *testing.T) {
+				app := cli.NewApp()
+
+				app.Command.Flags = []flag.Flag{
+					flag.StringFlag{
+						Name: testFlagName,
+					},
+				}
+
+				app.ContextConfig = customContextFunc
+
+				app.Action = testFunc
+
+				assert.Equal(t, 0, app.Run([]string{"testApp", "--" + testFlagName, testFlagValue}))
+			},
+		},
+		{
+			name: "check that context is propagated to app error handler",
+			check: func(t *testing.T) {
+				app := cli.NewApp()
+
+				app.Command.Flags = []flag.Flag{
+					flag.StringFlag{
+						Name:  testFlagName,
+						Value: "value",
+					},
+				}
+
+				app.ContextConfig = customContextFunc
+
+				app.ErrorHandler = func(ctx cli.Context, _ error) int {
+					assert.NoError(t, testFunc(ctx))
+					return 0
+				}
+
+				app.Action = func(ctx cli.Context) error {
+					return fmt.Errorf("an error occured")
+				}
+
+				assert.Equal(t, 0, app.Run([]string{"testApp", "--" + testFlagName, testFlagValue}))
+			},
+		},
+		{
+			name: "check that context is propagated to app subcommand",
+			check: func(t *testing.T) {
+				app := cli.NewApp()
+
+				app.Command.Flags = []flag.Flag{
+					flag.StringFlag{
+						Name: testFlagName,
+					},
+				}
+
+				app.ContextConfig = customContextFunc
+
+				app.Subcommands = []cli.Command{
+					{
+						Name: "subCommand",
+
+						Action: testFunc,
+
+						Flags: []flag.Flag{
+							flag.StringFlag{
+								Name: testFlagName,
+							},
+						},
+					},
+				}
+
+				assert.Equal(t, 0, app.Run([]string{"testApp", "subCommand", "--" + testFlagName, testFlagValue}))
+			},
+		},
+	}
+
+	for i, currCase := range cases {
+
+		name := fmt.Sprintf("Case %d - %s", i, currCase.name)
+
+		t.Run(name, currCase.check)
 	}
 }

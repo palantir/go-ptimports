@@ -5,6 +5,7 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"os"
 	"os/signal"
@@ -36,6 +37,16 @@ func (app *App) Run(args []string) (exitStatus int) {
 		printVersion(ctx)
 		return 0
 	}
+
+	baseContext := context.Background()
+	if app.ContextConfig != nil {
+		baseContext = app.ContextConfig(ctx, baseContext)
+	}
+	if baseContext == nil {
+		baseContext = context.Background()
+	}
+	ctx.context, ctx.cancel = context.WithCancel(baseContext)
+
 	if ctx.Bool(helpFlag.MainName()) {
 		ctx.PrintHelp(app.Stdout)
 		return 0
@@ -136,6 +147,9 @@ func runAction(ctx Context) error {
 	go func() {
 		if _, ok := <-signals; ok {
 			once.Do(onExit)
+			if ctx.cancel != nil {
+				ctx.cancel()
+			}
 			os.Exit(1)
 		}
 	}()

@@ -25,6 +25,7 @@ func (app *App) parse(args []string) (Context, error) {
 		specified: map[string]interface{}{},
 		allVals:   map[string][]interface{}{},
 	}
+
 	args = args[1:] // skip name of binary
 	fillDefaults(&ctx)
 	for {

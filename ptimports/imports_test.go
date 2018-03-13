@@ -25,12 +25,53 @@ import (
 
 func TestPtImports(t *testing.T) {
 	for i, tc := range []struct {
-		name          string
-		in            string
-		refactor      bool
-		localPrefixes []string
-		want          string
+		name    string
+		in      string
+		options *ptimports.Options
+		want    string
 	}{
+		{
+			"Does not simplify by default",
+			`package foo
+
+func Foo() {
+	for i, _ := range []string{} {
+		_ = i
+	}
+}
+`,
+			nil,
+			`package foo
+
+func Foo() {
+	for i, _ := range []string{} {
+		_ = i
+	}
+}
+`,
+		},
+		{
+			"Simplifies code when specified",
+			`package foo
+
+func Foo() {
+	for i, _ := range []string{} {
+		_ = i
+	}
+}
+`,
+			&ptimports.Options{
+				Simplify: true,
+			},
+			`package foo
+
+func Foo() {
+	for i := range []string{} {
+		_ = i
+	}
+}
+`,
+		},
 		{
 			"Imports not refactored if refactor is false",
 			`package foo
@@ -45,7 +86,7 @@ func Foo() {
 	_ = imports.Process
 }
 `,
-			false,
+
 			nil,
 			`package foo
 
@@ -74,8 +115,9 @@ func Foo() {
 	_ = imports.Process
 }
 `,
-			true,
-			nil,
+			&ptimports.Options{
+				Refactor: true,
+			},
 			`package foo
 
 import (
@@ -100,13 +142,32 @@ func Foo() {
 	fmt.Println("foo")
 }
 `,
-			true,
-			nil,
+			&ptimports.Options{
+				Refactor: true,
+			},
 			`package foo
 
 import (
 	"fmt"
 )
+
+func Foo() {
+	fmt.Println("foo")
+}
+`,
+		},
+		{
+			"Does not add import in format-only mode",
+			`package foo
+
+func Foo() {
+	fmt.Println("foo")
+}
+`,
+			&ptimports.Options{
+				FormatOnly: true,
+			},
+			`package foo
 
 func Foo() {
 	fmt.Println("foo")
@@ -127,9 +188,11 @@ func Foo() {
 	_ = imports.Process
 }
 `,
-			true,
-			[]string{
-				"github.com/palantir/go-ptimports/",
+			&ptimports.Options{
+				Refactor: true,
+				LocalPrefixes: []string{
+					"github.com/palantir/go-ptimports/",
+				},
 			},
 			`package foo
 
@@ -183,8 +246,9 @@ func Example() {
 
 }
 `,
-			true,
-			nil,
+			&ptimports.Options{
+				Refactor: true,
+			},
 			`package foo
 
 // import "C"
@@ -245,8 +309,9 @@ func Print(s string) {
 	C.free(unsafe.Pointer(cs))
 }
 `,
-			true,
-			nil,
+			&ptimports.Options{
+				Refactor: true,
+			},
 			`package foo
 
 // #include <stdio.h>
@@ -275,7 +340,7 @@ func Print(s string) {
 `,
 		},
 	} {
-		got, err := ptimports.Process("test.go", []byte(tc.in), tc.refactor, tc.localPrefixes)
+		got, err := ptimports.Process("test.go", []byte(tc.in), tc.options)
 		require.NoError(t, err, "Case %d: %s", i, tc.name)
 		assert.Equal(t, tc.want, string(got), "Case %d: %s", i, tc.name)
 	}

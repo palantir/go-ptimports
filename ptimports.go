@@ -27,11 +27,18 @@ import (
 var rootCmd = &cobra.Command{
 	Use: "go-ptimports",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		opts := &ptimports.Options{
+			Refactor:      refactorFlagVal,
+			Simplify:      simplifyFlagVal,
+			FormatOnly:    formatOnlyFlagVal,
+			LocalPrefixes: localPrefixFlagVal,
+		}
+
 		if len(args) == 0 {
-			return ptimports.ProcessFileFromInput("", os.Stdin, false, false, refactorFlagVal, localPrefixFlagVal, cmd.OutOrStdout())
+			return ptimports.ProcessFileFromInput("", os.Stdin, false, false, opts, cmd.OutOrStdout())
 		}
 		for _, currFile := range args {
-			if err := ptimports.ProcessFileFromInput(currFile, nil, listFlagVal, writeFlagVal, refactorFlagVal, localPrefixFlagVal, cmd.OutOrStdout()); err != nil {
+			if err := ptimports.ProcessFileFromInput(currFile, nil, listFlagVal, writeFlagVal, opts, cmd.OutOrStdout()); err != nil {
 				return errors.Wrapf(err, "failed to process file %s", currFile)
 			}
 		}
@@ -40,20 +47,24 @@ var rootCmd = &cobra.Command{
 }
 
 var (
-	debugFlagVal    bool
-	refactorFlagVal bool
-
-	listFlagVal        bool
-	writeFlagVal       bool
+	debugFlagVal       bool
+	simplifyFlagVal    bool
+	refactorFlagVal    bool
+	formatOnlyFlagVal  bool
 	localPrefixFlagVal []string
+
+	listFlagVal  bool
+	writeFlagVal bool
 )
 
 func init() {
+	rootCmd.Flags().BoolVarP(&simplifyFlagVal, "simplify", "s", false, "simplify code in the manner that gofmt does")
 	rootCmd.Flags().BoolVarP(&refactorFlagVal, "refactor", "r", false, "refactor imports to use block style imports")
+	rootCmd.Flags().BoolVar(&formatOnlyFlagVal, "format-only", false, "do not add or remove imports")
+	rootCmd.Flags().StringSliceVar(&localPrefixFlagVal, "local", nil, "put imports beginning with this string after 3rd-party packages; comma-separated list")
 
 	rootCmd.Flags().BoolVarP(&listFlagVal, "list", "l", false, "list files whose formatting differs from go-ptimport's")
 	rootCmd.Flags().BoolVarP(&writeFlagVal, "write", "w", false, "write result to (source) file instead of stdout")
-	rootCmd.Flags().StringSliceVar(&localPrefixFlagVal, "local", nil, "put imports beginning with this string after 3rd-party packages; comma-separated list")
 }
 
 func main() {

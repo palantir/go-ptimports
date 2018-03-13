@@ -82,55 +82,68 @@ func ProcessFileFromInput(filename string, in io.Reader, list, write, refactor b
 
 // Process formats and adjusts imports for the provided file.
 func Process(filename string, src []byte, refactor bool, localPrefixes []string) ([]byte, error) {
-	out := src
-
-	// if refactor is true, group import statements
-	if refactor {
-		fileSet := token.NewFileSet()
-		file, adjust, err := parse(fileSet, filename, src)
-		if err != nil {
-			return nil, err
-		}
-
-		cImportsDocs, err := fixImports(fileSet, file)
-		if err != nil {
-			return nil, err
-		}
-		printerMode := printer.UseSpaces | printer.TabIndent
-		printConfig := &printer.Config{Mode: printerMode, Tabwidth: 8}
-
-		var buf bytes.Buffer
-		err = printConfig.Fprint(&buf, fileSet, file)
-		if err != nil {
-			return nil, err
-		}
-		out = buf.Bytes()
-		if adjust != nil {
-			out = adjust(src, out)
-		}
-		out = addImportSpaces(bytes.NewReader(out))
-
-		cImportCommentIdx := 0
-		out = regexp.MustCompile(`\nimport "C"`).ReplaceAllFunc(out, func(match []byte) []byte {
-			if cImportCommentIdx >= len(cImportsDocs) {
-				return []byte(string(match) + "\n")
-			}
-			var commentLines []string
-			for _, comment := range cImportsDocs[cImportCommentIdx].List {
-				commentLines = append(commentLines, comment.Text)
-			}
-			val := []byte("\n" + strings.Join(commentLines, "\n") + string(match) + "\n")
-			cImportCommentIdx++
-			return val
-		})
-	}
-
-	// run goimports on output
+	// run goimports on output. Do this before refactoring so that the refactor operation has the most up-to-date
+	// imports (the Process operation may add or remove imports).
 	imports.LocalPrefix = strings.Join(localPrefixes, ",")
-	out, err := imports.Process(filename, out, nil)
+	out, err := imports.Process(filename, src, nil)
 	if err != nil {
 		return nil, err
 	}
+
+	// if refactor is true, group import statements
+	if refactor {
+		out, err = groupImports(filename, out)
+		if err != nil {
+			return nil, err
+		}
+		// run goimports on output after grouping imports
+		out, err = imports.Process(filename, out, nil)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return out, nil
+}
+
+func groupImports(filename string, src []byte) ([]byte, error) {
+	fileSet := token.NewFileSet()
+	file, adjust, err := parse(fileSet, filename, src)
+	if err != nil {
+		return nil, err
+	}
+
+	cImportsDocs, err := fixImports(fileSet, file)
+	if err != nil {
+		return nil, err
+	}
+	printerMode := printer.UseSpaces | printer.TabIndent
+	printConfig := &printer.Config{Mode: printerMode, Tabwidth: 8}
+
+	var buf bytes.Buffer
+	err = printConfig.Fprint(&buf, fileSet, file)
+	if err != nil {
+		return nil, err
+	}
+	out := buf.Bytes()
+	if adjust != nil {
+		out = adjust(src, out)
+	}
+	out = addImportSpaces(bytes.NewReader(out))
+
+	cImportCommentIdx := 0
+	out = regexp.MustCompile(`\nimport "C"`).ReplaceAllFunc(out, func(match []byte) []byte {
+		if cImportCommentIdx >= len(cImportsDocs) {
+			return []byte(string(match) + "\n")
+		}
+		var commentLines []string
+		for _, comment := range cImportsDocs[cImportCommentIdx].List {
+			commentLines = append(commentLines, comment.Text)
+		}
+		val := []byte("\n" + strings.Join(commentLines, "\n") + string(match) + "\n")
+		cImportCommentIdx++
+		return val
+	})
 	return out, nil
 }
 

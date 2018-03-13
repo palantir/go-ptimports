@@ -25,10 +25,73 @@ import (
 
 func TestPtImports(t *testing.T) {
 	for i, tc := range []struct {
-		name string
-		in   string
-		want string
+		name          string
+		in            string
+		refactor      bool
+		localPrefixes []string
+		want          string
 	}{
+		{
+			"Imports not reorganized if refactor is false",
+			`package foo
+
+import "github.com/palantir/go-ptimports/ptimports"
+import "bytes"
+import "golang.org/x/tools/imports"
+
+func Foo() {
+	_ = bytes.Buffer{}
+	_ = ptimports.Process
+	_ = imports.Process
+}
+`,
+			false,
+			nil,
+			`package foo
+
+import "github.com/palantir/go-ptimports/ptimports"
+import "bytes"
+import "golang.org/x/tools/imports"
+
+func Foo() {
+	_ = bytes.Buffer{}
+	_ = ptimports.Process
+	_ = imports.Process
+}
+`,
+		},
+		{
+			"Groups imports based on builtin and external",
+			`package foo
+
+import "github.com/palantir/go-ptimports/ptimports"
+import "bytes"
+import "golang.org/x/tools/imports"
+
+func Foo() {
+	_ = bytes.Buffer{}
+	_ = ptimports.Process
+	_ = imports.Process
+}
+`,
+			true,
+			nil,
+			`package foo
+
+import (
+	"bytes"
+
+	"github.com/palantir/go-ptimports/ptimports"
+	"golang.org/x/tools/imports"
+)
+
+func Foo() {
+	_ = bytes.Buffer{}
+	_ = ptimports.Process
+	_ = imports.Process
+}
+`,
+		},
 		{
 			"Groups imports based on builtin, external, and project-local",
 			`package foo
@@ -43,6 +106,10 @@ func Foo() {
 	_ = imports.Process
 }
 `,
+			true,
+			[]string{
+				"github.com/palantir/go-ptimports/",
+			},
 			`package foo
 
 import (
@@ -95,6 +162,8 @@ func Example() {
 
 }
 `,
+			true,
+			nil,
 			`package foo
 
 // import "C"
@@ -155,6 +224,8 @@ func Print(s string) {
 	C.free(unsafe.Pointer(cs))
 }
 `,
+			true,
+			nil,
 			`package foo
 
 // #include <stdio.h>
@@ -183,7 +254,7 @@ func Print(s string) {
 `,
 		},
 	} {
-		got, err := ptimports.Process("test.go", []byte(tc.in))
+		got, err := ptimports.Process("test.go", []byte(tc.in), tc.refactor, tc.localPrefixes)
 		require.NoError(t, err, "Case %d: %s", i, tc.name)
 		assert.Equal(t, tc.want, string(got), "Case %d: %s", i, tc.name)
 	}

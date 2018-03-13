@@ -8,15 +8,45 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/inconshreveable/mousetrap"
+  packages = ["."]
+  revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
+  version = "v1.0"
+
+[[projects]]
+  branch = "develop"
+  name = "github.com/nmiyake/pkg"
+  packages = ["errorstringer"]
+  revision = "b64318170fdef93b4462420e0badef8050dbb7ec"
+
+[[projects]]
   branch = "master"
   name = "github.com/palantir/pkg"
-  packages = ["matcher","pkgpath"]
+  packages = ["cobracli"]
   revision = "b59de130c1302a3c591efcfb0fd575727f53d0d2"
+
+[[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/spf13/cobra"
+  packages = ["."]
+  revision = "7b2c5ac9fc04fc5efafb60700713d4fa609b777b"
+  version = "v0.0.1"
+
+[[projects]]
+  name = "github.com/spf13/pflag"
+  packages = ["."]
+  revision = "e57e3eeb33f795204c1ca35f56c44f83227c6e66"
   version = "v1.0.0"
 
 [[projects]]
@@ -34,6 +64,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "da2906245f3bb0b09df3b90c1134512d3a9409d35172e2bb864b85d451c7186f"
+  inputs-digest = "aee92322011247e2a01b512acba472a77655830f5fb7f7c6b946108c6a936e18"
   solver-name = "gps-cdcl"
   solver-version = 1

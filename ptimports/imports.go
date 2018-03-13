@@ -29,81 +29,105 @@ import (
 	"go/printer"
 	"go/token"
 	"io"
+	"io/ioutil"
+	"os"
 	"regexp"
-	"strconv"
 	"strings"
 
-	"golang.org/x/tools/go/ast/astutil"
 	"golang.org/x/tools/imports"
 )
 
+// ProcessFileFromInput processes the provided file from the provider reader. If the reader is nil, then the file
+// described by filename is opened and used as the reader.
+func ProcessFileFromInput(filename string, in io.Reader, list, write, refactor bool, localPrefixes []string, stdout io.Writer) error {
+	if in == nil {
+		f, err := os.Open(filename)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			_ = f.Close()
+		}()
+		in = f
+	}
+
+	src, err := ioutil.ReadAll(in)
+	if err != nil {
+		return err
+	}
+
+	res, err := Process(filename, src, refactor, localPrefixes)
+	if err != nil {
+		return err
+	}
+
+	if list {
+		if !bytes.Equal(src, res) {
+			fmt.Fprintln(stdout, filename)
+		}
+		return nil
+	}
+
+	if write {
+		// only write when file changed
+		if !bytes.Equal(src, res) {
+			return ioutil.WriteFile(filename, res, 0)
+		}
+	} else {
+		// print regardless of whether they are equal
+		fmt.Fprint(stdout, string(res))
+	}
+	return nil
+}
+
 // Process formats and adjusts imports for the provided file.
-func Process(filename string, src []byte) ([]byte, error) {
-	fileSet := token.NewFileSet()
-	file, adjust, err := parse(fileSet, filename, src)
-	if err != nil {
-		return nil, err
-	}
+func Process(filename string, src []byte, refactor bool, localPrefixes []string) ([]byte, error) {
+	out := src
 
-	repo, err := repoForFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	grp := newVendoredGrouper(repo)
+	// if refactor is true, group import statements
+	if refactor {
+		fileSet := token.NewFileSet()
+		file, adjust, err := parse(fileSet, filename, src)
+		if err != nil {
+			return nil, err
+		}
 
-	cImportsDocs, err := fixImports(fileSet, file, grp)
-	if err != nil {
-		return nil, err
-	}
-	imps := astutil.Imports(fileSet, file)
+		cImportsDocs, err := fixImports(fileSet, file)
+		if err != nil {
+			return nil, err
+		}
+		printerMode := printer.UseSpaces | printer.TabIndent
+		printConfig := &printer.Config{Mode: printerMode, Tabwidth: 8}
 
-	var spacesBefore []string // import paths we need spaces before
-	lastGroup := -1
-	for _, impSection := range imps {
-		// Within each block of contiguous imports, see if any
-		// import lines are in different group numbers. If so,
-		// we'll need to put a space between them so it's
-		// compatible with gofmt.
-		for _, importSpec := range impSection {
-			importPath, _ := strconv.Unquote(importSpec.Path.Value)
-			groupNum := grp.importGroup(importPath)
-			if groupNum != lastGroup && lastGroup != -1 {
-				spacesBefore = append(spacesBefore, importPath)
+		var buf bytes.Buffer
+		err = printConfig.Fprint(&buf, fileSet, file)
+		if err != nil {
+			return nil, err
+		}
+		out = buf.Bytes()
+		if adjust != nil {
+			out = adjust(src, out)
+		}
+		out = addImportSpaces(bytes.NewReader(out))
+
+		cImportCommentIdx := 0
+		out = regexp.MustCompile(`\nimport "C"`).ReplaceAllFunc(out, func(match []byte) []byte {
+			if cImportCommentIdx >= len(cImportsDocs) {
+				return []byte(string(match) + "\n")
 			}
-			lastGroup = groupNum
-		}
+			var commentLines []string
+			for _, comment := range cImportsDocs[cImportCommentIdx].List {
+				commentLines = append(commentLines, comment.Text)
+			}
+			val := []byte("\n" + strings.Join(commentLines, "\n") + string(match) + "\n")
+			cImportCommentIdx++
+			return val
+		})
 	}
 
-	printerMode := printer.UseSpaces | printer.TabIndent
-	printConfig := &printer.Config{Mode: printerMode, Tabwidth: 8}
-
-	var buf bytes.Buffer
-	err = printConfig.Fprint(&buf, fileSet, file)
-	if err != nil {
-		return nil, err
-	}
-	out := buf.Bytes()
-	if adjust != nil {
-		out = adjust(src, out)
-	}
-	out = addImportSpaces(bytes.NewReader(out), spacesBefore)
-
-	cImportCommentIdx := 0
-	out = regexp.MustCompile(`\nimport "C"`).ReplaceAllFunc(out, func(match []byte) []byte {
-		if cImportCommentIdx >= len(cImportsDocs) {
-			return []byte(string(match) + "\n")
-		}
-		var commentLines []string
-		for _, comment := range cImportsDocs[cImportCommentIdx].List {
-			commentLines = append(commentLines, comment.Text)
-		}
-		val := []byte("\n" + strings.Join(commentLines, "\n") + string(match) + "\n")
-		cImportCommentIdx++
-		return val
-	})
-
-	// ensure that output is goimports-compliant
-	out, err = imports.Process(filename, out, nil)
+	// run goimports on output
+	imports.LocalPrefix = strings.Join(localPrefixes, ",")
+	out, err := imports.Process(filename, out, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -250,9 +274,7 @@ func matchSpace(orig []byte, src []byte) []byte {
 	return b.Bytes()
 }
 
-var impLine = regexp.MustCompile(`^\s+(?:[\w\.]+\s+)?"(.+)"`)
-
-func addImportSpaces(r io.Reader, breaks []string) []byte {
+func addImportSpaces(r io.Reader) []byte {
 	var out bytes.Buffer
 	sc := bufio.NewScanner(r)
 	inImports := false
@@ -270,14 +292,6 @@ func addImportSpaces(r io.Reader, breaks []string) []byte {
 			strings.HasPrefix(s, "type")) {
 			done = true
 			inImports = false
-		}
-		if inImports && len(breaks) > 0 {
-			if m := impLine.FindStringSubmatch(s); m != nil {
-				if m[1] == breaks[0] {
-					_ = out.WriteByte('\n')
-					breaks = breaks[1:]
-				}
-			}
 		}
 		if !inImports || s != "" {
 			fmt.Fprintln(&out, s)

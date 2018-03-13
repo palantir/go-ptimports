@@ -32,7 +32,7 @@ func TestPtImports(t *testing.T) {
 		want          string
 	}{
 		{
-			"Imports not reorganized if refactor is false",
+			"Imports not refactored if refactor is false",
 			`package foo
 
 import "github.com/palantir/go-ptimports/ptimports"
@@ -61,7 +61,7 @@ func Foo() {
 `,
 		},
 		{
-			"Groups imports based on builtin and external",
+			"Refactors and groups imports based on builtin and external if refactor is true",
 			`package foo
 
 import "github.com/palantir/go-ptimports/ptimports"
@@ -89,6 +89,27 @@ func Foo() {
 	_ = bytes.Buffer{}
 	_ = ptimports.Process
 	_ = imports.Process
+}
+`,
+		},
+		{
+			"Refactors import added by goimports",
+			`package foo
+
+func Foo() {
+	fmt.Println("foo")
+}
+`,
+			true,
+			nil,
+			`package foo
+
+import (
+	"fmt"
+)
+
+func Foo() {
+	fmt.Println("foo")
 }
 `,
 		},

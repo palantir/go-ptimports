@@ -39,7 +39,7 @@ import (
 
 // ProcessFileFromInput processes the provided file from the provider reader. If the reader is nil, then the file
 // described by filename is opened and used as the reader.
-func ProcessFileFromInput(filename string, in io.Reader, list, write, refactor bool, localPrefixes []string, stdout io.Writer) error {
+func ProcessFileFromInput(filename string, in io.Reader, list, write bool, options *Options, stdout io.Writer) error {
 	if in == nil {
 		f, err := os.Open(filename)
 		if err != nil {
@@ -56,7 +56,7 @@ func ProcessFileFromInput(filename string, in io.Reader, list, write, refactor b
 		return err
 	}
 
-	res, err := Process(filename, src, refactor, localPrefixes)
+	res, err := Process(filename, src, options)
 	if err != nil {
 		return err
 	}
@@ -80,24 +80,55 @@ func ProcessFileFromInput(filename string, in io.Reader, list, write, refactor b
 	return nil
 }
 
+type Options struct {
+	// if true, converts single-line imports into import blocks
+	Refactor bool
+	// if true, runs the "gofmt simplify" operation on code
+	Simplify bool
+	// if true, does not add or remove imports
+	FormatOnly bool
+	// prefixes to use for goimports operation
+	LocalPrefixes []string
+}
+
 // Process formats and adjusts imports for the provided file.
-func Process(filename string, src []byte, refactor bool, localPrefixes []string) ([]byte, error) {
+func Process(filename string, src []byte, options *Options) ([]byte, error) {
+	if options == nil {
+		options = &Options{}
+	}
+	importsOptions := &imports.Options{
+		// these values are the default for imports.Process
+		Comments:  true,
+		TabIndent: true,
+		TabWidth:  8,
+		// use provided formatOnly value
+		FormatOnly: options.FormatOnly,
+	}
+
 	// run goimports on output. Do this before refactoring so that the refactor operation has the most up-to-date
 	// imports (the Process operation may add or remove imports).
-	imports.LocalPrefix = strings.Join(localPrefixes, ",")
-	out, err := imports.Process(filename, src, nil)
+	imports.LocalPrefix = strings.Join(options.LocalPrefixes, ",")
+	out, err := imports.Process(filename, src, importsOptions)
 	if err != nil {
 		return nil, err
 	}
 
+	// if "simplify" is true, simplify the source
+	if options.Simplify {
+		out, err = simplifyFile(filename, out)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// if refactor is true, group import statements
-	if refactor {
+	if options.Refactor {
 		out, err = groupImports(filename, out)
 		if err != nil {
 			return nil, err
 		}
 		// run goimports on output after grouping imports
-		out, err = imports.Process(filename, out, nil)
+		out, err = imports.Process(filename, out, importsOptions)
 		if err != nil {
 			return nil, err
 		}
@@ -106,14 +137,37 @@ func Process(filename string, src []byte, refactor bool, localPrefixes []string)
 	return out, nil
 }
 
+func simplifyFile(filename string, src []byte) ([]byte, error) {
+	fset := token.NewFileSet()
+	file, adjust, err := parse(fset, filename, src)
+	if err != nil {
+		return nil, err
+	}
+	simplify(file)
+
+	printerMode := printer.UseSpaces | printer.TabIndent
+	printConfig := &printer.Config{Mode: printerMode, Tabwidth: 8}
+
+	var buf bytes.Buffer
+	err = printConfig.Fprint(&buf, fset, file)
+	if err != nil {
+		return nil, err
+	}
+	out := buf.Bytes()
+	if adjust != nil {
+		out = adjust(src, out)
+	}
+	return out, nil
+}
+
 func groupImports(filename string, src []byte) ([]byte, error) {
-	fileSet := token.NewFileSet()
-	file, adjust, err := parse(fileSet, filename, src)
+	fset := token.NewFileSet()
+	file, adjust, err := parse(fset, filename, src)
 	if err != nil {
 		return nil, err
 	}
 
-	cImportsDocs, err := fixImports(fileSet, file)
+	cImportsDocs, err := fixImports(fset, file)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +175,7 @@ func groupImports(filename string, src []byte) ([]byte, error) {
 	printConfig := &printer.Config{Mode: printerMode, Tabwidth: 8}
 
 	var buf bytes.Buffer
-	err = printConfig.Fprint(&buf, fileSet, file)
+	err = printConfig.Fprint(&buf, fset, file)
 	if err != nil {
 		return nil, err
 	}

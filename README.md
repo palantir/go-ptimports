@@ -1,8 +1,27 @@
 go-ptimports
 ============
 go-ptimports is a formatter for Go code. Functionally, it is almost identical to [goimports](https://godoc.org/golang.org/x/tools/cmd/goimports).
-The only difference is that, if the "refactor" flag is set to true, any non-CGo non-block imports are converted to block
-imports.
+However, it provides the following extra functionality:
+
+* When the `-s` flag is specified, code is simplified in the same manner as `gofmt -s`
+
+For example, a range statement such as:
+
+```go
+range i, _ := arr {
+    _ = i
+}
+```
+
+becomes:
+
+```go
+range i := arr {
+    _ = i
+}
+```
+
+* When the `-r` flag is specified, any non-CGo non-block imports are converted to block imports
 
 For example:
 
@@ -10,7 +29,7 @@ For example:
 import "go/ast"
 ```
 
-becomes
+becomes:
 
 ```go
 import (
@@ -20,4 +39,7 @@ import (
 
 Import statements of the form `import "C"` (and any comments associated with such import statements) are preserved.
 
-The output of `go-ptimports` is compliant with `goimports` and `gofmt`.
+The output of go-ptimports is compliant with goimports and gofmt.
+
+Runing go-ptimports without any extra flags matches the behavior of goimports. Running go-ptimports with the
+`--format-only` flag is roughly equivalent to the behavior of gofmt.

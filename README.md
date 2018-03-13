@@ -1,9 +1,8 @@
 go-ptimports
 ============
-go-ptimports is a formatter for Go code. It applies the formatting operation performed by [goimports](https://godoc.org/golang.org/x/tools/cmd/goimports)
-and also performs the following operations:
-
-* Converts import statements into the group format
+go-ptimports is a formatter for Go code. Functionally, it is almost identical to [goimports](https://godoc.org/golang.org/x/tools/cmd/goimports).
+The only difference is that, if the "refactor" flag is set to true, any non-CGo non-block imports are converted to block
+imports.
 
 For example:
 
@@ -19,19 +18,6 @@ import (
 )
 ```
 
-* Groups import statements between stdlib packages, non-stdlib packages and packages that are part of the project.
-
-For example, a file in `github.com/palantir/go-ptimports` that imports `testing`, `github.com/stretchr/testify/assert`
-and `github.com/palantir/go-ptimports/ptimports` would organize its imports as follows:
-
-```go
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/palantir/go-ptimports/ptimports"
-)
-```
+Import statements of the form `import "C"` (and any comments associated with such import statements) are preserved.
 
 The output of `go-ptimports` is compliant with `goimports` and `gofmt`.

@@ -178,15 +178,10 @@ func Foo() {
 			"Groups imports based on builtin, external, and project-local",
 			`package foo
 
-import "github.com/palantir/go-ptimports/ptimports"
-import "bytes"
-import "golang.org/x/tools/imports"
-
-func Foo() {
-	_ = bytes.Buffer{}
-	_ = ptimports.Process
-	_ = imports.Process
-}
+import _ "github.com/palantir/go-ptimports"
+import _ "github.com/palantir/go-ptimports/ptimports"
+import _ "bytes"
+import _ "golang.org/x/tools/imports"
 `,
 			&ptimports.Options{
 				Refactor: true,
@@ -197,18 +192,13 @@ func Foo() {
 			`package foo
 
 import (
-	"bytes"
+	_ "bytes"
 
-	"golang.org/x/tools/imports"
+	_ "golang.org/x/tools/imports"
 
-	"github.com/palantir/go-ptimports/ptimports"
+	_ "github.com/palantir/go-ptimports"
+	_ "github.com/palantir/go-ptimports/ptimports"
 )
-
-func Foo() {
-	_ = bytes.Buffer{}
-	_ = ptimports.Process
-	_ = imports.Process
-}
 `,
 		},
 		{

@@ -59,7 +59,7 @@
   branch = "master"
   name = "golang.org/x/tools"
   packages = ["go/ast/astutil","imports"]
-  revision = "059bec968c61383b574810040ba9410712de36c5"
+  revision = "77106db15f689a60e7d4e085d967ac557b918fb2"
 
 [solve-meta]
   analyzer-name = "dep"

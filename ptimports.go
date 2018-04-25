@@ -68,5 +68,5 @@ func init() {
 }
 
 func main() {
-	os.Exit(cobracli.ExecuteWithDefaultParamsWithVersion(rootCmd, &debugFlagVal, ""))
+	os.Exit(cobracli.ExecuteWithDebugVarAndDefaultParams(rootCmd, &debugFlagVal))
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cmd
 
 import (
 	"os"
@@ -47,7 +47,6 @@ var rootCmd = &cobra.Command{
 }
 
 var (
-	debugFlagVal       bool
 	simplifyFlagVal    bool
 	refactorFlagVal    bool
 	formatOnlyFlagVal  bool
@@ -57,6 +56,10 @@ var (
 	writeFlagVal bool
 )
 
+func Execute() int {
+	return cobracli.ExecuteWithDefaultParams(rootCmd)
+}
+
 func init() {
 	rootCmd.Flags().BoolVarP(&simplifyFlagVal, "simplify", "s", false, "simplify code in the manner that gofmt does")
 	rootCmd.Flags().BoolVarP(&refactorFlagVal, "refactor", "r", false, "refactor imports to use block style imports")
@@ -65,8 +68,4 @@ func init() {
 
 	rootCmd.Flags().BoolVarP(&listFlagVal, "list", "l", false, "list files whose formatting differs from go-ptimport's")
 	rootCmd.Flags().BoolVarP(&writeFlagVal, "write", "w", false, "write result to (source) file instead of stdout")
-}
-
-func main() {
-	os.Exit(cobracli.ExecuteWithDebugVarAndDefaultParams(rootCmd, &debugFlagVal))
 }

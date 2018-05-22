@@ -329,6 +329,26 @@ func Print(s string) {
 }
 `,
 		},
+		{
+			"CGo import in string constant",
+			`package foo
+
+const str = ` + "`" + `
+import "C"
+import "unsafe"
+` + "`" + `
+`,
+			&ptimports.Options{
+				Refactor: true,
+			},
+			`package foo
+
+const str = ` + "`" + `
+import "C"
+import "unsafe"
+` + "`" + `
+`,
+		},
 	} {
 		got, err := ptimports.Process("test.go", []byte(tc.in), tc.options)
 		require.NoError(t, err, "Case %d: %s", i, tc.name)

@@ -36,12 +36,12 @@ jobs:
     environment:
       VERIFY: 1
     docker:
-      - image: golang:1.10.2
+      - image: golang:1.10.3
     steps: *steps
   go-prev:
     <<: *working_dir
     docker:
-      - image: golang:1.9.6
+      - image: golang:1.9.7
     steps: *steps
 
 workflows:

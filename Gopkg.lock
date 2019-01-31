@@ -78,14 +78,24 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:95f24cc9a9a50da8aa144484a7c625c2e30dcbddf8e3bc336d2d92108b8c769e"
+  digest = "1:86d002f2c67e364e097c5047f517ab38cdef342c3c20be53974c1bfd5b191d30"
   name = "golang.org/x/tools"
   packages = [
     "go/ast/astutil",
+    "go/gcexportdata",
+    "go/internal/cgo",
+    "go/internal/gcimporter",
+    "go/internal/packagesdriver",
+    "go/packages",
+    "go/types/typeutil",
     "imports",
+    "internal/fastwalk",
+    "internal/gopathwalk",
+    "internal/module",
+    "internal/semver",
   ]
   pruneopts = "UT"
-  revision = "77106db15f689a60e7d4e085d967ac557b918fb2"
+  revision = "067a2f313b693f3c2d3c0eb328434c91c7fc9b6b"
 
 [solve-meta]
   analyzer-name = "dep"

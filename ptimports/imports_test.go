@@ -51,6 +51,26 @@ func Foo() {
 `,
 		},
 		{
+			"Alias is not added for gopkg.in import",
+			`package foo
+
+import "gopkg.in/yaml.v2"
+
+func Foo() {
+	_ = yaml.Unmarshal
+}
+`,
+			nil,
+			`package foo
+
+import "gopkg.in/yaml.v2"
+
+func Foo() {
+	_ = yaml.Unmarshal
+}
+`,
+		},
+		{
 			"Simplifies code when specified",
 			`package foo
 

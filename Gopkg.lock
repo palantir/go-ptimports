@@ -26,6 +26,17 @@
   revision = "b64318170fdef93b4462420e0badef8050dbb7ec"
 
 [[projects]]
+  digest = "1:3c8a5f7d5f6c91c52666a0e1236bd138ad86200c338e37e55d05970763683aaf"
+  name = "github.com/palantir/go-ptimports"
+  packages = [
+    "cmd",
+    "ptimports",
+  ]
+  pruneopts = "UT"
+  revision = "ebcb691af6bc8db4989665d5ef37e20d1f7777f3"
+  version = "v2.6.0"
+
+[[projects]]
   branch = "master"
   digest = "1:6db686ebf4d62572d52f6c4ee22867f1afba01f741d82a2a4d358fc5d720cc02"
   name = "github.com/palantir/pkg"
@@ -101,6 +112,8 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/palantir/go-ptimports/cmd",
+    "github.com/palantir/go-ptimports/ptimports",
     "github.com/palantir/pkg/cobracli",
     "github.com/pkg/errors",
     "github.com/spf13/cobra",

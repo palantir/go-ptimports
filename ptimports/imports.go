@@ -63,7 +63,7 @@ func ProcessFileFromInput(filename string, in io.Reader, list, write bool, optio
 
 	if list {
 		if !bytes.Equal(src, res) {
-			fmt.Fprintln(stdout, filename)
+			_, _ = fmt.Fprintln(stdout, filename)
 		}
 		return nil
 	}
@@ -75,7 +75,7 @@ func ProcessFileFromInput(filename string, in io.Reader, list, write bool, optio
 		}
 	} else {
 		// print regardless of whether they are equal
-		fmt.Fprint(stdout, string(res))
+		_, _ = fmt.Fprint(stdout, string(res))
 	}
 	return nil
 }

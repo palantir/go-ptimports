@@ -1,4 +1,4 @@
-module github.com/palantir/go-ptimports
+module github.com/palantir/go-ptimports/v2
 
 go 1.13
 

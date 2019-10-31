@@ -21,7 +21,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/palantir/go-ptimports/ptimports"
+	"github.com/palantir/go-ptimports/v2/ptimports"
 )
 
 var rootCmd = &cobra.Command{

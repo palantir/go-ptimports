@@ -1,3 +1,7 @@
+<p align="right">
+<a href="https://autorelease.general.dmz.palantir.tech/palantir/go-ptimports"><img src="https://img.shields.io/badge/Perform%20an-Autorelease-success.svg" alt="Autorelease"></a>
+</p>
+
 go-ptimports
 ============
 go-ptimports is a formatter for Go code. Functionally, it is almost identical to [goimports](https://godoc.org/golang.org/x/tools/cmd/goimports).

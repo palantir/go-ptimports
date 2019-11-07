@@ -21,7 +21,6 @@
 package ptimports
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"go/ast"
@@ -183,7 +182,7 @@ func groupImports(filename string, src []byte) ([]byte, error) {
 	if adjust != nil {
 		out = adjust(src, out)
 	}
-	out = addImportSpaces(bytes.NewReader(out))
+	out = addImportSpaces(out)
 
 	cImportCommentIdx := 0
 	out = regexp.MustCompile(`\nimport "C"`).ReplaceAllFunc(out, func(match []byte) []byte {
@@ -341,13 +340,12 @@ func matchSpace(orig []byte, src []byte) []byte {
 	return b.Bytes()
 }
 
-func addImportSpaces(r io.Reader) []byte {
+func addImportSpaces(input []byte) []byte {
 	var out bytes.Buffer
-	sc := bufio.NewScanner(r)
 	inImports := false
 	done := false
-	for sc.Scan() {
-		s := sc.Text()
+	for _, currLineBytes := range bytes.Split(input, []byte("\n")) {
+		s := string(currLineBytes)
 
 		if !inImports && !done && strings.HasPrefix(s, "import") {
 			inImports = true

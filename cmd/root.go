@@ -24,8 +24,6 @@ import (
 	"github.com/palantir/pkg/cobracli"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-
-	// "github.com/whilp/git-urls"
 	"github.com/x0rzkov/go-vcsurl"
 	"gopkg.in/src-d/go-git.v4"
 

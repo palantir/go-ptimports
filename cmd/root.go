@@ -17,7 +17,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/karrick/godirwalk"
@@ -50,7 +49,6 @@ var rootCmd = &cobra.Command{
 				}
 			}
 			for _, dirname := range dirs {
-				// localPath := ""
 				if autoLocalDetectFlagVal {
 					localPath, err := getRemoteURLPath(dirname)
 					if err != nil {
@@ -98,11 +96,6 @@ var rootCmd = &cobra.Command{
 		}
 		return nil
 	},
-}
-
-func getRepositoriesDir() string {
-	d, _ := os.Getwd()
-	return filepath.Clean(filepath.Join(d))
 }
 
 func getRemoteURLPath(path string) (string, error) {

@@ -15,13 +15,16 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
+	"strings"
 
+	"github.com/karrick/godirwalk"
 	"github.com/palantir/pkg/cobracli"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	"github.com/palantir/go-ptimports/v2/ptimports"
+	"github.com/x0rzkov/go-ptimports/v2/ptimports"
 )
 
 var rootCmd = &cobra.Command{
@@ -32,14 +35,51 @@ var rootCmd = &cobra.Command{
 			Simplify:      simplifyFlagVal,
 			FormatOnly:    formatOnlyFlagVal,
 			LocalPrefixes: localPrefixFlagVal,
+			// RecursiveDir:  recursiveDirFlagVal,
 		}
 
-		if len(args) == 0 {
-			return ptimports.ProcessFileFromInput("", os.Stdin, false, false, opts, cmd.OutOrStdout())
-		}
-		for _, currFile := range args {
-			if err := ptimports.ProcessFileFromInput(currFile, nil, listFlagVal, writeFlagVal, opts, cmd.OutOrStdout()); err != nil {
-				return errors.Wrapf(err, "failed to process file %s", currFile)
+		if recursiveDirFlagVal {
+			var dirs []string
+			if len(args) == 0 {
+				dirs = append(dirs, ".")
+			} else {
+				for _, arg := range args {
+					dirs = append(dirs, arg)
+				}
+			}
+			for _, dirname := range dirs {
+				err := godirwalk.Walk(dirname, &godirwalk.Options{
+					Callback: func(currFile string, de *godirwalk.Dirent) error {
+						if skipVendorFlagVal && strings.HasPrefix(currFile, "vendor") {
+							if verboseFlagVal {
+								fmt.Printf("skipping %s \n", currFile)
+							}
+							return nil
+						}
+						if strings.HasSuffix(currFile, ".go") {
+							if verboseFlagVal {
+								fmt.Printf("processing %s %s\n", de.ModeType(), currFile)
+							}
+							if err := ptimports.ProcessFileFromInput(currFile, nil, listFlagVal, writeFlagVal, opts, cmd.OutOrStdout()); err != nil {
+								return errors.Wrapf(err, "failed to process file %s", currFile)
+							}
+						}
+						return nil
+					},
+					Unsorted: true, // (optional) set true for faster yet non-deterministic enumeration (see godoc)
+				})
+				if err != nil {
+					return errors.Wrapf(err, "failed to process directory %s", dirname)
+				}
+			}
+		} else {
+			if len(args) == 0 {
+				return ptimports.ProcessFileFromInput("", os.Stdin, false, false, opts, cmd.OutOrStdout())
+			}
+			for _, currFile := range args {
+				if err := ptimports.ProcessFileFromInput(currFile, nil, listFlagVal, writeFlagVal, opts, cmd.OutOrStdout()); err != nil {
+					return errors.Wrapf(err, "failed to process file %s", currFile)
+				}
 			}
 		}
 		return nil
@@ -47,13 +87,16 @@ var rootCmd = &cobra.Command{
 }
 
 var (
-	simplifyFlagVal    bool
-	refactorFlagVal    bool
-	formatOnlyFlagVal  bool
-	localPrefixFlagVal []string
-
-	listFlagVal  bool
-	writeFlagVal bool
+	simplifyFlagVal        bool
+	refactorFlagVal        bool
+	formatOnlyFlagVal      bool
+	recursiveDirFlagVal    bool
+	skipVendorFlagVal      bool
+	localAutoDetectFlagVal bool
+	localPrefixFlagVal     []string
+	listFlagVal            bool
+	writeFlagVal           bool
+	verboseFlagVal         bool
 )
 
 func Execute() int {
@@ -66,6 +109,10 @@ func init() {
 	rootCmd.Flags().BoolVar(&formatOnlyFlagVal, "format-only", false, "do not add or remove imports")
 	rootCmd.Flags().StringSliceVar(&localPrefixFlagVal, "local", nil, "put imports beginning with this string after 3rd-party packages; comma-separated list")
 
+	rootCmd.Flags().BoolVarP(&verboseFlagVal, "verbose", "v", false, "verbose mode")
+	rootCmd.Flags().BoolVarP(&localAutoDetectFlagVal, "local-detect", "o", false, "auto-detect local")
+	rootCmd.Flags().BoolVarP(&skipVendorFlagVal, "skip-vendor", "k", false, "skip vendor dir.")
+	rootCmd.Flags().BoolVarP(&recursiveDirFlagVal, "recursive-dir", "d", false, "walk through directory.")
 	rootCmd.Flags().BoolVarP(&listFlagVal, "list", "l", false, "list files whose formatting differs from go-ptimport's")
 	rootCmd.Flags().BoolVarP(&writeFlagVal, "write", "w", false, "write result to (source) file instead of stdout")
 }

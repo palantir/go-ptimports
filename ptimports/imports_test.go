@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/palantir/go-ptimports/v2/ptimports"
+	"github.com/x0rzkov/go-ptimports/v2/ptimports"
 )
 
 func TestPtImports(t *testing.T) {
@@ -96,7 +96,7 @@ func Foo() {
 			"Imports not refactored if refactor is false",
 			`package foo
 
-import "github.com/palantir/go-ptimports/ptimports"
+import "github.com/x0rzkov/go-ptimports/ptimports"
 import "bytes"
 import "golang.org/x/tools/imports"
 
@@ -110,7 +110,7 @@ func Foo() {
 			nil,
 			`package foo
 
-import "github.com/palantir/go-ptimports/ptimports"
+import "github.com/x0rzkov/go-ptimports/ptimports"
 import "bytes"
 import "golang.org/x/tools/imports"
 
@@ -125,7 +125,7 @@ func Foo() {
 			"Refactors and groups imports based on builtin and external if refactor is true",
 			`package foo
 
-import "github.com/palantir/go-ptimports/ptimports"
+import "github.com/x0rzkov/go-ptimports/ptimports"
 import "bytes"
 import "golang.org/x/tools/imports"
 
@@ -143,7 +143,7 @@ func Foo() {
 import (
 	"bytes"
 
-	"github.com/palantir/go-ptimports/ptimports"
+	"github.com/x0rzkov/go-ptimports/ptimports"
 	"golang.org/x/tools/imports"
 )
 
@@ -198,15 +198,15 @@ func Foo() {
 			"Groups imports based on builtin, external, and project-local",
 			`package foo
 
-import _ "github.com/palantir/go-ptimports"
-import _ "github.com/palantir/go-ptimports/ptimports"
+import _ "github.com/x0rzkov/go-ptimports"
+import _ "github.com/x0rzkov/go-ptimports/ptimports"
 import _ "bytes"
 import _ "golang.org/x/tools/imports"
 `,
 			&ptimports.Options{
 				Refactor: true,
 				LocalPrefixes: []string{
-					"github.com/palantir/go-ptimports/",
+					"github.com/x0rzkov/go-ptimports/",
 				},
 			},
 			`package foo
@@ -216,8 +216,8 @@ import (
 
 	_ "golang.org/x/tools/imports"
 
-	_ "github.com/palantir/go-ptimports"
-	_ "github.com/palantir/go-ptimports/ptimports"
+	_ "github.com/x0rzkov/go-ptimports"
+	_ "github.com/x0rzkov/go-ptimports/ptimports"
 )
 `,
 		},

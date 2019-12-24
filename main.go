@@ -17,7 +17,7 @@ package main
 import (
 	"os"
 
-	"github.com/palantir/go-ptimports/v2/cmd"
+	"github.com/x0rzkov/go-ptimports/v2/cmd"
 )
 
 func main() {

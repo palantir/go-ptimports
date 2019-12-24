@@ -1,8 +1,9 @@
-module github.com/palantir/go-ptimports/v2
+module github.com/x0rzkov/go-ptimports/v2
 
 go 1.13
 
 require (
+	github.com/karrick/godirwalk v1.13.4
 	github.com/palantir/pkg/cobracli v1.0.0
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.5

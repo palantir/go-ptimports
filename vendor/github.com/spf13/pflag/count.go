@@ -1,6 +1,8 @@
 package pflag
 
-import "strconv"
+import (
+	"strconv"
+)
 
 // -- count Value
 type countValue int

@@ -20,7 +20,9 @@
 
 package spew
 
-import "reflect"
+import (
+	"reflect"
+)
 
 const (
 	// UnsafeDisabled is a build-time constant which specifies whether or

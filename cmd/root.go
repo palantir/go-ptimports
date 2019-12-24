@@ -17,12 +17,17 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/karrick/godirwalk"
 	"github.com/palantir/pkg/cobracli"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	// "github.com/whilp/git-urls"
+	"github.com/x0rzkov/go-vcsurl"
+	"gopkg.in/src-d/go-git.v4"
 
 	"github.com/x0rzkov/go-ptimports/v2/ptimports"
 )
@@ -35,7 +40,6 @@ var rootCmd = &cobra.Command{
 			Simplify:      simplifyFlagVal,
 			FormatOnly:    formatOnlyFlagVal,
 			LocalPrefixes: localPrefixFlagVal,
-			// RecursiveDir:  recursiveDirFlagVal,
 		}
 
 		if recursiveDirFlagVal {
@@ -48,6 +52,18 @@ var rootCmd = &cobra.Command{
 				}
 			}
 			for _, dirname := range dirs {
+				// localPath := ""
+				if autoLocalDetectFlagVal {
+					localPath, err := getRemoteURLPath(dirname)
+					if err != nil {
+						return errors.Wrapf(err, "failed to get local path for %s", dirname)
+					}
+					if verboseFlagVal {
+						fmt.Printf("localPath %s \n", localPath)
+					}
+					opts.LocalPrefixes = append(opts.LocalPrefixes, localPath)
+				}
+
 				err := godirwalk.Walk(dirname, &godirwalk.Options{
 					Callback: func(currFile string, de *godirwalk.Dirent) error {
 						if skipVendorFlagVal && strings.HasPrefix(currFile, "vendor") {
@@ -86,13 +102,57 @@ var rootCmd = &cobra.Command{
 	},
 }
 
+func getRepositoriesDir() string {
+	d, _ := os.Getwd()
+	return filepath.Clean(filepath.Join(d))
+}
+
+func getRemoteURLPath(path string) (string, error) {
+	if path == "" {
+		path = "."
+	}
+	// We instantiate a new repository targeting the given path (the .git folder)
+	r, err := git.PlainOpen(path)
+	if err != nil {
+		return "", err
+	}
+	cfg, err := r.Config()
+	if err != nil {
+		return "", err
+	}
+	if verboseFlagVal {
+		fmt.Printf("remote origin url: %s\n", cfg.Remotes["origin"].URLs[0])
+	}
+	p, err := parseVcsURL(cfg.Remotes["origin"].URLs[0])
+	if err != nil {
+		return "", err
+	}
+	return p, nil
+}
+
+func parseVcsURL(url string) (string, error) {
+	if info, err := vcsurl.Parse(url); err == nil {
+		if verboseFlagVal {
+			fmt.Printf("%s %s\n", info.VCS, info.CloneURL)
+			fmt.Printf("   name: %s\n", info.Name)
+			fmt.Printf("   host: %s\n", info.RepoHost)
+			fmt.Printf("   username: %s\n", info.Username)
+			fmt.Printf("   fullname: %s\n", info.FullName)
+			fmt.Printf("   rev: %s\n", info.Rev)
+		}
+		return strings.Replace(info.Link(), "https://", "", -1), nil
+	} else {
+		return "", err
+	}
+}
+
 var (
 	simplifyFlagVal        bool
 	refactorFlagVal        bool
 	formatOnlyFlagVal      bool
 	recursiveDirFlagVal    bool
 	skipVendorFlagVal      bool
-	localAutoDetectFlagVal bool
+	autoLocalDetectFlagVal bool
 	localPrefixFlagVal     []string
 	listFlagVal            bool
 	writeFlagVal           bool
@@ -109,8 +169,9 @@ func init() {
 	rootCmd.Flags().BoolVar(&formatOnlyFlagVal, "format-only", false, "do not add or remove imports")
 	rootCmd.Flags().StringSliceVar(&localPrefixFlagVal, "local", nil, "put imports beginning with this string after 3rd-party packages; comma-separated list")
 
+	rootCmd.Flags().BoolVarP(&autoLocalDetectFlagVal, "auto-local", "a", false, "detect local path")
 	rootCmd.Flags().BoolVarP(&verboseFlagVal, "verbose", "v", false, "verbose mode")
-	rootCmd.Flags().BoolVarP(&localAutoDetectFlagVal, "local-detect", "o", false, "auto-detect local")
+	rootCmd.Flags().BoolVarP(&autoLocalDetectFlagVal, "local-detect", "o", false, "auto-detect local")
 	rootCmd.Flags().BoolVarP(&skipVendorFlagVal, "skip-vendor", "k", false, "skip vendor dir.")
 	rootCmd.Flags().BoolVarP(&recursiveDirFlagVal, "recursive-dir", "d", false, "walk through directory.")
 	rootCmd.Flags().BoolVarP(&listFlagVal, "list", "l", false, "list files whose formatting differs from go-ptimport's")

@@ -8,5 +8,8 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.5
 	github.com/stretchr/testify v1.4.0
-	golang.org/x/tools v0.0.0-20190131163942-067a2f313b69
+	github.com/whilp/git-urls v0.0.0-20191001220047-6db9661140c0
+	github.com/x0rzkov/go-vcsurl v1.0.1
+	golang.org/x/tools v0.0.0-20190729092621-ff9f1409240a
+	gopkg.in/src-d/go-git.v4 v4.13.1
 )

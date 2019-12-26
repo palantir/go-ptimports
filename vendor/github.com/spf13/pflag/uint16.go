@@ -1,8 +1,6 @@
 package pflag
 
-import (
-	"strconv"
-)
+import "strconv"
 
 // -- uint16 value
 type uint16Value uint16

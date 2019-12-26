@@ -1,8 +1,6 @@
 package pflag
 
-import (
-	"strconv"
-)
+import "strconv"
 
 // optional interface to indicate boolean flags that can be
 // supplied without "=value" text

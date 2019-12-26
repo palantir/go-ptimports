@@ -6,9 +6,7 @@
 
 package gcimporter
 
-import (
-	"go/types"
-)
+import "go/types"
 
 func newInterface(methods []*types.Func, embeddeds []types.Type) *types.Interface {
 	named := make([]*types.Named, len(embeddeds))

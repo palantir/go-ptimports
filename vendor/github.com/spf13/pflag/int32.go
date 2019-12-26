@@ -1,8 +1,6 @@
 package pflag
 
-import (
-	"strconv"
-)
+import "strconv"
 
 // -- int32 Value
 type int32Value int32

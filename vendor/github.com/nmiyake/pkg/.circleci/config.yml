@@ -1,0 +1,81 @@
+checkout-path: &checkout-path
+  checkout-path: /go/src/github.com/nmiyake/pkg
+
+version: 2.1
+
+orbs:
+  go: palantir/go@0.0.14
+  godel: palantir/godel@0.0.14
+
+workflows:
+  version: 2
+  verify-test:
+    jobs:
+      # dirs
+      - godel/verify:
+          name: dirs-verify
+          <<: *checkout-path
+          executor:
+            name: go/golang
+            version: 1.13.4
+            owner-repo: nmiyake/pkg/dirs
+      - godel/test:
+          name: dirs-test-go-1.13
+          <<: *checkout-path
+          executor:
+            name: go/golang
+            version: 1.13.4
+            owner-repo: nmiyake/pkg/dirs
+      - godel/test:
+          name: dirs-test-go-1.12
+          <<: *checkout-path
+          executor:
+            name: go/golang
+            version: 1.12.13
+            owner-repo: nmiyake/pkg/dirs
+
+      # errorstringer
+      - godel/verify:
+          name: errorstringer-verify
+          <<: *checkout-path
+          executor:
+            name: go/golang
+            version: 1.13.4
+            owner-repo: nmiyake/pkg/errorstringer
+      - godel/test:
+          name: errorstringer-test-go-1.13
+          <<: *checkout-path
+          executor:
+            name: go/golang
+            version: 1.13.4
+            owner-repo: nmiyake/pkg/errorstringer
+      - godel/test:
+          name: errorstringer-test-go-1.12
+          <<: *checkout-path
+          executor:
+            name: go/golang
+            version: 1.12.13
+            owner-repo: nmiyake/pkg/errorstringer
+
+      # gofiles
+      - godel/verify:
+          name: gofiles-verify
+          <<: *checkout-path
+          executor:
+            name: go/golang
+            version: 1.13.4
+            owner-repo: nmiyake/pkg/gofiles
+      - godel/test:
+          name: gofiles-test-go-1.13
+          <<: *checkout-path
+          executor:
+            name: go/golang
+            version: 1.13.4
+            owner-repo: nmiyake/pkg/gofiles
+      - godel/test:
+          name: gofiles-test-go-1.12
+          <<: *checkout-path
+          executor:
+            name: go/golang
+            version: 1.12.13
+            owner-repo: nmiyake/pkg/gofiles

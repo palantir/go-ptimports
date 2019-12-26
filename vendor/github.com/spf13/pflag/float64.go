@@ -1,8 +1,6 @@
 package pflag
 
-import (
-	"strconv"
-)
+import "strconv"
 
 // -- float64 Value
 type float64Value float64

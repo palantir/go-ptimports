@@ -1,8 +1,6 @@
 package pflag
 
-import (
-	"strconv"
-)
+import "strconv"
 
 // -- int64 Value
 type int64Value int64

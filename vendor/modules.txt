@@ -4,7 +4,9 @@ github.com/davecgh/go-spew/spew
 github.com/inconshreveable/mousetrap
 # github.com/nmiyake/pkg/errorstringer v1.0.0
 github.com/nmiyake/pkg/errorstringer
-# github.com/palantir/pkg/cobracli v1.0.0
+# github.com/palantir/pkg v1.0.1
+github.com/palantir/pkg
+# github.com/palantir/pkg/cobracli v1.0.1
 github.com/palantir/pkg/cobracli
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors

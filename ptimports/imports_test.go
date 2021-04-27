@@ -93,7 +93,53 @@ func Foo() {
 `,
 		},
 		{
-			"Imports not refactored if refactor is false",
+			"Single import not refactored if refactor is false",
+			`package foo
+
+import "bytes"
+
+func Foo() {
+	_ = bytes.Buffer{}
+}
+`,
+
+			nil,
+			`package foo
+
+import "bytes"
+
+func Foo() {
+	_ = bytes.Buffer{}
+}
+`,
+		},
+		{
+			"Single import refactored if refactor is true",
+			`package foo
+
+import "bytes"
+
+func Foo() {
+	_ = bytes.Buffer{}
+}
+`,
+
+			&ptimports.Options{
+				Refactor: true,
+			},
+			`package foo
+
+import (
+	"bytes"
+)
+
+func Foo() {
+	_ = bytes.Buffer{}
+}
+`,
+		},
+		{
+			"Multiple imports refactored even if refactor is false",
 			`package foo
 
 import "github.com/palantir/go-ptimports/ptimports"
@@ -110,9 +156,12 @@ func Foo() {
 			nil,
 			`package foo
 
-import "github.com/palantir/go-ptimports/ptimports"
-import "bytes"
-import "golang.org/x/tools/imports"
+import (
+	"bytes"
+
+	"github.com/palantir/go-ptimports/ptimports"
+	"golang.org/x/tools/imports"
+)
 
 func Foo() {
 	_ = bytes.Buffer{}
@@ -370,8 +419,10 @@ import "unsafe"
 `,
 		},
 	} {
-		got, err := ptimports.Process("test.go", []byte(tc.in), tc.options)
-		require.NoError(t, err, "Case %d: %s", i, tc.name)
-		assert.Equal(t, tc.want, string(got), "Case %d: %s", i, tc.name)
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := ptimports.Process("test.go", []byte(tc.in), tc.options)
+			require.NoError(t, err, "Case %d: %s", i, tc.name)
+			assert.Equal(t, tc.want, string(got), "Case %d: %s", i, tc.name)
+		})
 	}
 }

@@ -17,10 +17,9 @@ package ptimports_test
 import (
 	"testing"
 
+	"github.com/palantir/go-ptimports/v2/ptimports"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/palantir/go-ptimports/v2/ptimports"
 )
 
 func TestPtImports(t *testing.T) {

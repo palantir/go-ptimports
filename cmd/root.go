@@ -17,11 +17,10 @@ package cmd
 import (
 	"os"
 
+	"github.com/palantir/go-ptimports/v2/ptimports"
 	"github.com/palantir/pkg/cobracli"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
-
-	"github.com/palantir/go-ptimports/v2/ptimports"
 )
 
 var rootCmd = &cobra.Command{

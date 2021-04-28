@@ -1,0 +1,5 @@
+type: fix
+fix:
+  description: Ensures that panic does not occur when processing files that contain an `import "C"` directive without comments.
+  links:
+  - https://github.com/palantir/go-ptimports/pull/82

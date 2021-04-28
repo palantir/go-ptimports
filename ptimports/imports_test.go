@@ -418,6 +418,34 @@ import "unsafe"
 ` + "`" + `
 `,
 		},
+		{
+			"CGo import without comments does not crash",
+			`package foo
+
+import "C"
+import (
+	_ "strings"
+)
+
+func Print(s string) {
+	_ = C
+}
+`,
+			&ptimports.Options{
+				Refactor: true,
+			},
+			`package foo
+
+import "C"
+import (
+	_ "strings"
+)
+
+func Print(s string) {
+	_ = C
+}
+`,
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := ptimports.Process("test.go", []byte(tc.in), tc.options)

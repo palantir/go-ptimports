@@ -1,6 +1,6 @@
 module github.com/palantir/go-ptimports/v2
 
-go 1.18
+go 1.19
 
 require (
 	github.com/palantir/pkg/cobracli v1.1.0

@@ -2,6 +2,8 @@ module github.com/palantir/go-ptimports/v2
 
 go 1.26.0
 
+toolchain go1.26.3
+
 require (
 	github.com/palantir/pkg/cobracli v1.3.0
 	github.com/pkg/errors v0.9.1

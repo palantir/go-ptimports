@@ -2,7 +2,7 @@ module github.com/palantir/go-ptimports/v2
 
 go 1.27.0
 
-toolchain go1.27.2
+toolchain go1.27.3
 
 require (
 	github.com/palantir/pkg/cobracli v1.4.0
